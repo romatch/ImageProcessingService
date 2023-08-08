@@ -1,7 +1,7 @@
 import flask
 from flask import request
 import os
-from bot import ImageProcessingBot
+from bot import ImageProcessingBot, Bot
 from polybot import bot
 
 app = flask.Flask(__name__)
