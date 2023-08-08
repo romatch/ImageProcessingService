@@ -70,8 +70,3 @@ class Img:
     def segment(self):
         # TODO remove the `raise` below, and write your implementation
         raise NotImplementedError()
-
-
-my_img = Img('/home/romka/Pictures/Photoforbot/picturepro.jpeg')
-my_img.rotate()
-my_img.save_img()
