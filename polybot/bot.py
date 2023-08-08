@@ -63,16 +63,77 @@ class Bot:
     def handle_message(self, msg):
         """Bot Main message handler"""
         logger.info(f'Incoming message: {msg}')
-        self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}')
+        if 'text' in msg:
+            self.send_text(msg['chat']['id'], f'Your original message: {msg["text"]}')
 
 
 class QuoteBot(Bot):
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
-
         if msg["text"] != 'Please don\'t quote me':
             self.send_text_with_quote(msg['chat']['id'], msg["text"], quoted_msg_id=msg["message_id"])
 
 
 class ImageProcessingBot(Bot):
-    pass
+    def __init__(self, token, telegram_chat_url):
+        super().__init__(token, telegram_chat_url)
+        self.processing_completed = True
+
+    def handle_message(self, msg):
+        if not self.processing_completed:
+            logger.info("Previous message processing is not completed. Ignoring current message.")
+            return
+
+        if "photo" in msg:
+            # If the message contains a photo, check if it also has a caption
+            if "caption" in msg:
+                caption = msg["caption"]
+                if "contour" in caption.lower():
+                    self.process_image_contur(msg)
+                if "rotate" in caption.lower():
+                    self.process_image_rotate(msg)
+            else:
+                logger.info("Received photo without a caption.")
+        elif "text" in msg:
+            super().handle_message(msg)  # Call the parent class method to handle text messages
+    def process_image_contur(self, msg):
+        self.processing_completed = False
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.contour()  # contur the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
+
+    def process_image_rotate(self, msg):
+        self.processing_completed = False
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.rotate()  # rotate the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
